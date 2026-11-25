@@ -234,6 +234,38 @@ Expected response — `summary` should show:
 Each event is recorded in the `records` array with timestamp, event type, task type,
 a snippet of the input text, and matched pattern details.
 
+### 3.15 PII detection — redacted before reaching the model
+
+```bash
+curl -X POST http://localhost:8080/api/ai/summarize \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Please summarize this and email results to jane.doe@example.com"}'
+```
+
+`total_pii_detections` in the safety summary should increment by 1, and the
+text actually sent to the model has the email replaced with `[REDACTED_EMAIL]`.
+
+### 3.16 Secrets detection — redacted before reaching the model
+
+```bash
+curl -X POST http://localhost:8080/api/ai/classify \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Here is my key sk-abcdefghijklmnopqrstuvwx, please classify this note"}'
+```
+
+`total_secrets_detections` should increment by 1.
+
+### 3.17 Check guardrails configuration
+
+```bash
+curl http://localhost:8080/api/ai/guardrails
+```
+
+Shows which detections block the request (400) vs. log/redact only. All
+blocking is off by default (see `readme.md` for the env vars to flip it on);
+prompt injection / harmful content / secrets are always logged, PII and
+secrets are always redacted regardless of blocking mode.
+
 ---
 
 ## 4. Viewing All Metrics at Once
